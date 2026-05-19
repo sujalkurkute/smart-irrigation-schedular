@@ -1,29 +1,108 @@
-# Virtual Environment
+# ==============================
+# Virtual Environments
+# ==============================
 venv/
 backend/venv/
+env/
+ENV/
 
-# Python cache
+# ==============================
+# Python Cache & Compiled Files
+# ==============================
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
-# Environment variables
+# ==============================
+# Environment Variables
+# ==============================
 .env
+.env.*
+*.env
 
-# ML models (optional)
+# ==============================
+# Machine Learning Models
+# ==============================
 *.pkl
+*.joblib
+*.h5
+*.keras
+*.pt
+*.pth
+*.onnx
 
-# ML models
-*.pkl
-
-# Large datasets
+# ==============================
+# Datasets & Large Files
+# ==============================
 *.csv
+*.xlsx
+*.xls
+*.zip
+*.tar.gz
 
-# Environment
-venv/
-backend/venv/
+# ==============================
+# Logs
+# ==============================
+*.log
 
+# ==============================
 # VS Code
+# ==============================
 .vscode/
 
-# OS files
+# ==============================
+# Jupyter Notebook
+# ==============================
+.ipynb_checkpoints/
+
+# ==============================
+# Build / Distribution
+# ==============================
+build/
+dist/
+*.egg-info/
+
+# ==============================
+# Docker
+# ==============================
+docker-compose.override.yml
+
+# ==============================
+# OS Files
+# ==============================
 .DS_Store
+Thumbs.db
+
+# ==============================
+# Node Modules (if frontend exists)
+# ==============================
+node_modules/
+
+# ==============================
+# Temporary Files
+# ==============================
+*.tmp
+*.temp
+
+# ==============================
+# SQLite Database
+# ==============================
+*.sqlite3
+
+# ==============================
+# Pytest / Coverage
+# ==============================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==============================
+# IntelliJ / PyCharm
+# ==============================
+.idea/
+
+# ==============================
+# Mac/Linux Hidden Files
+# ==============================
+.Trashes
+.cache/
