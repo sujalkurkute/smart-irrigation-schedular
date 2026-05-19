@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Irrigation Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Hind:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --bg: #0d1a0f;
+  --surface: #132016;
+  --surface2: #1a2d1e;
+  --surface3: #203526;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.12);
+  --green-glow: rgba(74,222,128,0.22);
+  --yellow: #fbbf24;
+  --yellow-dim: rgba(251,191,36,0.12);
+  --blue: #38bdf8;
+  --blue-dim: rgba(56,189,248,0.1);
+  --orange: #fb923c;
+  --orange-dim: rgba(251,146,60,0.1);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.1);
+  --text: #f0fdf4;
+  --text-muted: #6b7c6e;
+  --text-dim: #9cb8a0;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-lg: 26px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hind', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 10% 0%, rgba(74,222,128,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 100%, rgba(251,191,36,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(34,197,94,0.03) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(74,222,128,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+/* ── Language Bar ── */
+.lang-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 24px;
+  animation: fadeDown 0.5s ease both;
+}
+
+.lang-btn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-size: 13px;
+  font-family: 'Hind', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lang-btn.active {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green);
+  font-weight: 600;
+}
+
+.lang-btn:hover:not(.active) { color: var(--text); }
+
+/* ── Header ── */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeDown 0.6s 0.05s ease both;
+}
+
+.header-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 18px;
+  box-shadow: 0 0 40px var(--green-glow), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+h1 {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 34px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 30%, var(--green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.header-sub { color: var(--text-muted); font-size: 15px; font-weight: 300; }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px;
+  margin-bottom: 32px;
+  animation: fadeDown 0.6s 0.1s ease both;
+}
+
+.tab {
+  flex: 1;
+  padding: 11px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.25s;
+  font-family: 'Hind', sans-serif;
+}
+
+.tab:hover:not(.active) { color: var(--text-dim); background: var(--surface2); }
+
+.tab.active {
+  background: var(--surface3);
+  color: var(--green);
+  border: 1px solid rgba(74,222,128,0.2);
+  font-weight: 600;
+}
+
+/* ── Panels ── */
+.panel { display: none; animation: fadeUp 0.4s ease both; }
+.panel.active { display: block; }
+
+/* ── Farmer Card ── */
+.farmer-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  margin-bottom: 20px;
+}
+
+.step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green-dim);
+  border: 1px solid rgba(74,222,128,0.2);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.card-title {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+
+/* ── City Input Row ── */
+.city-row { display: flex; gap: 10px; margin-bottom: 20px; }
+
+.city-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.city-input-wrap:focus-within {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-dim);
+}
+
+.city-input-wrap span { font-size: 18px; }
+
+.city-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'Hind', sans-serif;
+  padding: 14px 0;
+}
+
+.city-input-wrap input::placeholder { color: var(--text-muted); }
+
+.btn-weather {
+  padding: 14px 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: 'Hind', sans-serif;
+}
+
+.btn-weather:hover { border-color: var(--green); color: var(--green); }
+
+/* ── Weather Chips ── */
+.weather-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  min-height: 36px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-dim);
+  animation: popIn 0.3s ease both;
+}
+
+.chip strong { color: var(--green); }
+
+/* ── Form Fields ── */
+.simple-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.field-wrap { display: flex; flex-direction: column; gap: 7px; }
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-label .fi { font-size: 14px; }
+
+.field-select, .field-input-s {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'Hind', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.field-select:focus, .field-input-s:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-dim);
+}
+
+.select-wrap { position: relative; }
+
+.select-wrap::after {
+  content: '▾';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 12px;
+}
+
+/* ── Soil Buttons ── */
+.soil-btns { display: flex; gap: 8px; }
+
+.soil-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: 'Hind', sans-serif;
+}
+
+.soil-btn .s-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+.soil-btn.active {
+  border-color: var(--green);
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.soil-btn:hover:not(.active) { border-color: var(--border2); color: var(--text-dim); }
+
+/* ── Main CTA Button ── */
+.btn-go {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  color: #0d1a0f;
+  font-weight: 800;
+  font-size: 17px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: 'Baloo 2', sans-serif;
+  letter-spacing: 0.3px;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.btn-go:hover { transform: translateY(-2px); box-shadow: 0 12px 30px var(--green-glow); }
+.btn-go:active { transform: translateY(0); }
+.btn-go.loading { opacity: 0.7; pointer-events: none; }
+
+/* ── Result Card ── */
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: none;
+  animation: popIn 0.5s ease both;
+  margin-top: 20px;
+}
+
+.result-header {
+  padding: 28px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.result-icon-big {
+  width: 64px; height: 64px;
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.result-icon-big.yes { background: var(--green-dim); border: 1px solid rgba(74,222,128,0.2); }
+.result-icon-big.no  { background: var(--blue-dim);  border: 1px solid rgba(56,189,248,0.15); }
+
+.result-title { font-family: 'Baloo 2', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.2; margin-bottom: 4px; }
+.result-title.yes { color: var(--green); }
+.result-title.no  { color: var(--blue); }
+.result-subtitle  { font-size: 14px; color: var(--text-muted); }
+
+.result-body { display: grid; grid-template-columns: repeat(3,1fr); }
+
+.result-stat {
+  padding: 22px 24px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.result-stat:nth-child(3n) { border-right: none; }
+.result-stat:nth-last-child(-n+3) { border-bottom: none; }
+
+.rs-icon { font-size: 22px; margin-bottom: 10px; }
+.rs-label { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; }
+.rs-value { font-family: 'Baloo 2', sans-serif; font-size: 20px; font-weight: 700; line-height: 1.2; }
+.rs-unit  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.result-reason {
+  padding: 20px 28px;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.result-reason strong { color: var(--green); }
+
+/* ── Weather Panel ── */
+.sec-hdr { margin-bottom: 24px; }
+.sec-hdr h2 { font-family: 'Baloo 2', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+.sec-hdr p  { font-size: 13px; color: var(--text-muted); }
+
+.weather-search { display: flex; gap: 10px; margin-bottom: 24px; }
+
+.w-input-wrap {
+  flex: 1;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 16px;
+  transition: border-color 0.2s;
+}
+
+.w-input-wrap:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-dim); }
+.w-input-wrap input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:15px; font-family:'Hind',sans-serif; padding:14px 0; }
+.w-input-wrap input::placeholder { color: var(--text-muted); }
+
+.btn-fetch {
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  color: #0d1a0f; font-weight: 700; font-size: 14px;
+  border: none; border-radius: var(--radius-sm);
+  cursor: pointer; font-family: 'Baloo 2', sans-serif;
+  transition: all 0.2s;
+}
+
+.btn-fetch:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--green-glow); }
+
+.w-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 18px; }
+
+.w-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 18px;
+  position: relative; overflow: hidden; transition: transform 0.2s;
+}
+
+.w-card:hover { transform: translateY(-2px); }
+.w-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.w-card.g::before { background: var(--green); }
+.w-card.b::before { background: var(--blue); }
+.w-card.y::before { background: var(--yellow); }
+.w-card.o::before { background: var(--orange); }
+
+.wc-icon { font-size: 20px; margin-bottom: 12px; }
+.wc-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
+.wc-value { font-family: 'Baloo 2', sans-serif; font-size: 26px; font-weight: 800; }
+.w-card.g .wc-value { color: var(--green); }
+.w-card.b .wc-value { color: var(--blue); }
+.w-card.y .wc-value { color: var(--yellow); }
+.w-card.o .wc-value { color: var(--orange); }
+
+.w-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.w-detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.wdc-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 14px; }
+.wdc-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+.wdc-row:last-child { border-bottom: none; }
+.wdc-row span:first-child { color: var(--text-muted); }
+.wdc-row span:last-child { font-weight: 500; }
+
+/* ── Schedule Panel ── */
+.sched-grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; }
+
+.sched-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px; }
+.sched-result { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px; }
+
+.sched-empty { height: 100%; min-height: 220px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text-muted); font-size:14px; gap:10px; text-align:center; }
+.sched-empty-icon { font-size: 44px; opacity: 0.3; }
+
+.sched-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+.sched-item:last-child { border-bottom: none; }
+.sched-icon-box { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.sib-g { background: var(--green-dim); }
+.sib-b { background: var(--blue-dim); }
+.sib-y { background: var(--yellow-dim); }
+.sib-o { background: var(--orange-dim); }
+.sib-r { background: var(--red-dim); }
+.si-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:2px; }
+.si-val { font-family:'Baloo 2',sans-serif; font-weight:700; font-size:16px; }
+
+/* ── Toast ── */
+.toast { position:fixed; bottom:28px; right:28px; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius); padding:14px 20px; font-size:14px; z-index:999; transform:translateY(70px); opacity:0; transition:all 0.3s ease; max-width:300px; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.err { border-color:var(--red); color:var(--red); }
+.toast.ok  { border-color:var(--green); color:var(--green); }
+
+/* ── Animations ── */
+@keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp   { from{opacity:0;transform:translateY(14px)}  to{opacity:1;transform:translateY(0)} }
+@keyframes popIn    { from{opacity:0;transform:scale(0.96)}       to{opacity:1;transform:scale(1)} }
+@keyframes spin     { to{transform:rotate(360deg)} }
+
+.spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,0.25); border-top-color:#000; border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
+.spinner-light { border-color:rgba(255,255,255,0.15); border-top-color:var(--green); }
+
+@media(max-width:760px) {
+  .simple-grid { grid-template-columns:1fr; }
+  .result-body { grid-template-columns:1fr 1fr; }
+  .w-grid { grid-template-columns:repeat(2,1fr); }
+  .sched-grid { grid-template-columns:1fr; }
+  .w-detail-grid { grid-template-columns:1fr; }
+  h1 { font-size:26px; }
+}
+
+.ml-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(74,222,128,0.15);
+  border: 1px solid rgba(74,222,128,0.3);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Language Bar -->
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">English</button>
+    <button class="lang-btn" onclick="setLang('hi')">हिंदी</button>
+    <button class="lang-btn" onclick="setLang('mr')">मराठी</button>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🌾</div>
+    <h1 id="app-title">Smart Irrigation Planner</h1>
+    <p class="header-sub" id="app-sub">Simple advice for every farmer — no technical knowledge needed</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('farmer',this)" id="tab-farmer">🌱 Irrigation Advice</div>
+    <div class="tab" onclick="switchTab('weather',this)" id="tab-weather">🌤 Weather</div>
+    <div class="tab" onclick="switchTab('schedule',this)" id="tab-schedule">📅 Schedule</div>
+  </div>
+
+  <!-- ═══════════ FARMER / IRRIGATION ADVICE PANEL ═══════════ -->
+  <div class="panel active" id="panel-farmer">
+
+    <!-- Step 1: Location -->
+    <div class="farmer-card" style="animation:fadeUp 0.4s 0.05s ease both;">
+      <div class="step-label">Step 1 — <span id="lbl-location">Your Location</span></div>
+      <div class="card-title" id="city-title">Which village or city are you in?</div>
+      <div class="card-desc" id="city-desc">We will automatically get the weather for your area</div>
+      <div class="city-row">
+        <div class="city-input-wrap">
+          <span>📍</span>
+          <input type="text" id="farmer-city" placeholder="e.g. Pune, Nashik, Solapur…" onkeydown="if(event.key==='Enter') autoFetchWeather()">
+        </div>
+        <button class="btn-weather" onclick="autoFetchWeather()" id="btn-get-weather">Get Weather 🌤</button>
+      </div>
+      <div class="weather-chips" id="weather-chips">
+        <div class="chip" style="opacity:0.4;font-size:12px;">🌡 Temperature &nbsp;💧 Humidity &nbsp;💨 Wind — auto-filled after fetching</div>
+      </div>
+    </div>
+
+    <!-- Step 2: Crop & Field -->
+    <div class="farmer-card" style="animation:fadeUp 0.4s 0.1s ease both;">
+      <div class="step-label">Step 2 — <span id="lbl-crop-step">Your Crop & Field</span></div>
+      <div class="card-title" style="font-size:17px;margin-bottom:18px;" id="sr-title">
+  Irrigation Schedule
+  <span class="ml-badge">🤖 ML Powered</span>
+</div>
+      <div class="simple-grid">
+        <div class="field-wrap">
+          <label class="field-label"><span class="fi">🌾</span> <span id="lbl-crop-type">Crop Type</span></label>
+          <div class="select-wrap">
+            <select class="field-select" id="crop-type">
+              <option value="Wheat">🌾 Wheat / गेहूँ / गहू</option>
+              <option value="Rice">🌿 Rice / धान / भात</option>
+              <option value="Maize">🌽 Maize / मक्का / मका</option>
+              <option value="Cotton">🫘 Cotton / कपास / कापूस</option>
+              <option value="Sugarcane">🎋 Sugarcane / गन्ना / ऊस</option>
+              <option value="Soybean">🫛 Soybean / सोयाबीन</option>
+              <option value="Onion">🧅 Onion / प्याज / कांदा</option>
+              <option value="Tomato">🍅 Tomato / टमाटर / टोमॅटो</option>
+              <option value="Sunflower">🌻 Sunflower / सूरजमुखी</option>
+              <option value="Groundnut">🥜 Groundnut / मूँगफली / भुईमूग</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label"><span class="fi">📐</span> <span id="lbl-acres">Field Size (Acres)</span></label>
+          <input class="field-input-s" type="number" id="field-acres" placeholder="e.g. 2" value="2" min="0.1" step="0.1">
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="field-label" style="margin-bottom:10px;"><span class="fi">🪨</span> <span id="lbl-soil">How does the soil feel right now?</span></label>
+        <div class="soil-btns">
+          <button class="soil-btn active" onclick="setSoil('dry',this)">
+            <span class="s-icon">🏜</span><span id="s-dry">Dry</span>
+          </button>
+          <button class="soil-btn" onclick="setSoil('normal',this)">
+            <span class="s-icon">🌱</span><span id="s-normal">Normal</span>
+          </button>
+          <button class="soil-btn" onclick="setSoil('wet',this)">
+            <span class="s-icon">💧</span><span id="s-wet">Wet</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-go" id="btn-advise" onclick="getAdvice()">🌾 Get My Irrigation Advice</button>
+
+    <!-- Result -->
+    <div class="result-card" id="result-card">
+      <div class="result-header">
+        <div class="result-icon-big yes" id="res-icon-box">💧</div>
+        <div>
+          <div class="result-title yes" id="res-title">Irrigate Today</div>
+          <div class="result-subtitle" id="res-subtitle">Based on your weather and soil conditions</div>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="result-stat">
+          <div class="rs-icon">⏰</div>
+          <div class="rs-label" id="lbl-best-time">Best Time</div>
+          <div class="rs-value" id="res-time">--</div>
+          <div class="rs-unit" id="lbl-time-unit">to irrigate today</div>
+        </div>
+        <div class="result-stat">
+          <div class="rs-icon">💦</div>
+          <div class="rs-label" id="lbl-water">Water Needed</div>
+          <div class="rs-value" id="res-water">--</div>
+          <div class="rs-unit">mm per irrigation</div>
+        </div>
+        <div class="result-stat">
+          <div class="rs-icon">📆</div>
+          <div class="rs-label" id="lbl-next">Next Irrigation</div>
+          <div class="rs-value" id="res-next">--</div>
+          <div class="rs-unit" id="lbl-next-unit">schedule</div>
+        </div>
+        <div class="result-stat">
+          <div class="rs-icon">🌡</div>
+          <div class="rs-label" id="lbl-weather-now">Weather Now</div>
+          <div class="rs-value" id="res-weather-val">--</div>
+          <div class="rs-unit" id="res-weather-sub">temperature</div>
+        </div>
+        <div class="result-stat">
+          <div class="rs-icon">🌾</div>
+          <div class="rs-label" id="lbl-your-crop">Your Crop</div>
+          <div class="rs-value" id="res-crop">--</div>
+          <div class="rs-unit" id="lbl-crop-unit">selected crop</div>
+        </div>
+        <div class="result-stat">
+          <div class="rs-icon">📐</div>
+          <div class="rs-label" id="lbl-your-field">Your Field</div>
+          <div class="rs-value" id="res-field">--</div>
+          <div class="rs-unit" id="lbl-field-unit">acres</div>
+        </div>
+      </div>
+      <div class="result-reason" id="res-reason">Advice will appear here after analysis.</div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ WEATHER PANEL ═══════════ -->
+  <div class="panel" id="panel-weather">
+    <div class="sec-hdr">
+      <h2 id="wh-title">Live Weather Data</h2>
+      <p id="wh-desc">Get real-time weather for any city or village</p>
+    </div>
+    <div class="weather-search">
+      <div class="w-input-wrap">
+        <span>📍</span>
+        <input type="text" id="w-city" placeholder="Enter city name…" onkeydown="if(event.key==='Enter') fetchWeatherTab()">
+      </div>
+      <button class="btn-fetch" id="btn-fetch-w" onclick="fetchWeatherTab()">Fetch Weather</button>
+    </div>
+    <div class="w-grid">
+      <div class="w-card g"><div class="wc-icon">🌡</div><div class="wc-label" id="wl-temp">Temperature</div><div class="wc-value" id="wv-temp">--</div></div>
+      <div class="w-card b"><div class="wc-icon">💧</div><div class="wc-label" id="wl-hum">Humidity</div><div class="wc-value" id="wv-hum">--</div></div>
+      <div class="w-card y"><div class="wc-icon">🌤</div><div class="wc-label" id="wl-cond">Condition</div><div class="wc-value" id="wv-cond" style="font-size:16px;padding-top:4px">--</div></div>
+      <div class="w-card o"><div class="wc-icon">💨</div><div class="wc-label" id="wl-wind">Wind</div><div class="wc-value" id="wv-wind">--</div></div>
+    </div>
+    <div class="w-detail-grid">
+      <div class="w-detail-card">
+        <div class="wdc-title" id="wl-atm">Atmospheric Details</div>
+        <div class="wdc-row"><span id="wl-feels">Feels Like</span><span id="wv-feels">--</span></div>
+        <div class="wdc-row"><span id="wl-pressure">Pressure</span><span id="wv-pressure">--</span></div>
+        <div class="wdc-row"><span id="wl-vis">Visibility</span><span id="wv-vis">--</span></div>
+        <div class="wdc-row"><span id="wl-clouds">Cloud Cover</span><span id="wv-clouds">--</span></div>
+      </div>
+      <div class="w-detail-card">
+        <div class="wdc-title" id="wl-sun">Sun & Location</div>
+        <div class="wdc-row"><span id="wl-sunrise">Sunrise</span><span id="wv-sunrise">--</span></div>
+        <div class="wdc-row"><span id="wl-sunset">Sunset</span><span id="wv-sunset">--</span></div>
+        <div class="wdc-row"><span id="wl-country">Country</span><span id="wv-country">--</span></div>
+        <div class="wdc-row"><span id="wl-minmax">Min / Max Temp</span><span id="wv-minmax">--</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SCHEDULE PANEL ═══════════ -->
+  <div class="panel" id="panel-schedule">
+    <div class="sec-hdr">
+      <h2 id="sh-title">Schedule Planner</h2>
+      <p id="sh-desc">Generate a detailed irrigation schedule</p>
+    </div>
+    <div class="sched-grid">
+
+      <!-- Left: Farmer inputs only -->
+      <div class="sched-form">
+        <div class="card-title" id="sf-title" style="font-size:17px;margin-bottom:6px;">Your Details</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;" id="sf-desc">Just tell us your location, crop and soil — we handle the rest</p>
+
+        <!-- City -->
+        <div class="field-wrap" style="margin-bottom:14px;">
+          <label class="field-label">📍 <span id="sf-city-lbl">Village / City</span></label>
+          <div class="city-input-wrap" style="margin-top:0;">
+            <span>📍</span>
+            <input type="text" id="sc-city" placeholder="e.g. Pune, Nashik…" onkeydown="if(event.key==='Enter') schedFetchWeather()">
+          </div>
+        </div>
+
+        <!-- Auto weather chips for schedule -->
+        <div class="weather-chips" id="sched-chips" style="margin-bottom:18px;">
+          <div class="chip" style="opacity:0.4;font-size:12px;">Weather auto-filled when you enter city above</div>
+        </div>
+
+        <!-- Crop -->
+        <div class="field-wrap" style="margin-bottom:14px;">
+          <label class="field-label" id="sf-crop">🌾 <span id="sf-crop-lbl">Crop Type</span></label>
+          <div class="select-wrap">
+            <select class="field-select" id="sc-crop">
+              <option value="Wheat">🌾 Wheat / गेहूँ / गहू</option>
+              <option value="Rice">🌿 Rice / धान / भात</option>
+              <option value="Maize">🌽 Maize / मक्का / मका</option>
+              <option value="Cotton">🫘 Cotton / कपास / कापूस</option>
+              <option value="Sugarcane">🎋 Sugarcane / गन्ना / ऊस</option>
+              <option value="Soybean">🫛 Soybean / सोयाबीन</option>
+              <option value="Onion">🧅 Onion / प्याज / कांदा</option>
+              <option value="Tomato">🍅 Tomato / टमाटर / टोमॅटो</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Soil condition — simple buttons, no number input -->
+        <div class="field-wrap" style="margin-bottom:20px;">
+          <label class="field-label" style="margin-bottom:10px;">🪨 <span id="sf-soil-lbl">How does the soil feel?</span></label>
+          <div class="soil-btns">
+            <button class="soil-btn active" onclick="setSchedSoil('dry',this)">
+              <span class="s-icon">🏜</span><span id="ss-dry">Dry</span>
+            </button>
+            <button class="soil-btn" onclick="setSchedSoil('normal',this)">
+              <span class="s-icon">🌱</span><span id="ss-normal">Normal</span>
+            </button>
+            <button class="soil-btn" onclick="setSchedSoil('wet',this)">
+              <span class="s-icon">💧</span><span id="ss-wet">Wet</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-go" id="btn-sched" onclick="generateSchedule()" style="font-size:15px;padding:14px;">📅 Generate Schedule</button>
+      </div>
+
+      <!-- Right: Schedule output -->
+      <div class="sched-result">
+        <div class="card-title" style="font-size:17px;margin-bottom:18px;" id="sr-title">Irrigation Schedule</div>
+        <div class="sched-empty" id="sched-empty">
+          <div class="sched-empty-icon">📅</div>
+          <div id="sched-empty-txt">Generate a schedule to see your plan</div>
+        </div>
+        <div id="sched-items" style="display:none;">
+          <div class="sched-item">
+            <div class="sched-icon-box sib-g">💧</div>
+            <div><div class="si-label" id="si-today-lbl">Irrigate Today?</div><div class="si-val" id="si-today">--</div></div>
+          </div>
+          <div class="sched-item">
+            <div class="sched-icon-box sib-b">⏰</div>
+            <div><div class="si-label" id="si-time-lbl">Best Time</div><div class="si-val" id="si-time">--</div></div>
+          </div>
+          <div class="sched-item">
+            <div class="sched-icon-box sib-y">📏</div>
+            <div><div class="si-label" id="si-amt-lbl">Water Amount</div><div class="si-val" id="si-amt">--</div></div>
+          </div>
+          <div class="sched-item">
+            <div class="sched-icon-box sib-o">📆</div>
+            <div><div class="si-label" id="si-next-lbl">Next Irrigation</div><div class="si-val" id="si-next">--</div></div>
+          </div>
+          <div class="sched-item">
+            <div class="sched-icon-box sib-r">💡</div>
+            <div><div class="si-label" id="si-reason-lbl">Reason</div><div class="si-val" id="si-reason" style="font-size:14px;font-weight:400;color:var(--text-dim);">--</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+let currentLang = 'en';
+let soilLevel = 'dry';        // for irrigation advice panel
+let schedSoilLevel = 'dry';   // for schedule panel
+let cachedWeather = null;     // irrigation advice panel weather
+let schedWeather = null;      // schedule panel weather
+
+/* ══════════════════════════════════
+   TRANSLATIONS
+══════════════════════════════════ */
+const T = {
+  en: {
+    appTitle:'Smart Irrigation Planner',
+    appSub:'Simple advice for every farmer — no technical knowledge needed',
+    tabFarmer:'🌱 Irrigation Advice', tabWeather:'🌤 Weather', tabSchedule:'📅 Schedule',
+    lblLocation:'Your Location',
+    cityTitle:'Which village or city are you in?',
+    cityDesc:'We will automatically get the weather for your area',
+    btnGetWeather:'Get Weather 🌤',
+    lblCropStep:'Your Crop & Field',
+    cropTitle:'Tell us about your crop and field',
+    lblCropType:'Crop Type', lblAcres:'Field Size (Acres)',
+    lblSoil:'How does the soil feel right now?',
+    sDry:'Dry', sNormal:'Normal', sWet:'Wet',
+    btnAdvise:'🌾 Get My Irrigation Advice',
+    resSub:'Based on your weather and soil conditions',
+    lblBestTime:'Best Time', lblTimeUnit:'to irrigate today',
+    lblWater:'Water Needed', lblNext:'Next Irrigation', lblNextUnit:'schedule',
+    lblWeatherNow:'Weather Now', lblYourCrop:'Your Crop', lblCropUnit:'selected crop',
+    lblYourField:'Your Field', lblFieldUnit:'acres',
+    resTitleYes:'✅ Irrigate Today', resTitleNo:'💤 No Irrigation Today',
+    whTitle:'Live Weather Data', whDesc:'Get real-time weather for any city or village',
+    wlTemp:'Temperature', wlHum:'Humidity', wlCond:'Condition', wlWind:'Wind Speed',
+    wlAtm:'Atmospheric Details', wlFeels:'Feels Like', wlPressure:'Pressure',
+    wlVis:'Visibility', wlClouds:'Cloud Cover',
+    wlSun:'Sun & Location', wlSunrise:'Sunrise', wlSunset:'Sunset',
+    wlCountry:'Country', wlMinmax:'Min / Max Temp',
+    shTitle:'Schedule Planner', shDesc:'Generate a detailed irrigation schedule',
+    sfTitle:'Your Details',
+    sfDesc:'Just tell us your location, crop and soil — we handle the rest',
+    sfCityLbl:'Village / City', sfCropLbl:'Crop Type', sfSoilLbl:'How does the soil feel?',
+    sfBtn:'📅 Generate Schedule', srTitle:'Irrigation Schedule',
+    ssDry:'Dry', ssNormal:'Normal', ssWet:'Wet',
+    siToday:'Irrigate Today?', siTime:'Best Time', siAmt:'Water Amount',
+    siNext:'Next Irrigation', siReason:'Reason',
+    schedEmptyTxt:'Generate a schedule to see your plan',
+    toastWeatherOk: c=>`✅ Weather loaded for ${c}`,
+    toastWeatherErr:'City not found. Please check the name.',
+    toastBackendErr:'Backend not connected. Is Docker running?',
+    toastSchedOk:'📅 Schedule generated!',
+    toastEnterCity:'Please enter your city or village name',
+    toastEnterCityFirst:'⚠️ Please fetch weather first (Step 1)',
+    reasonYes:(crop,temp,soil)=>`Your <strong>${crop}</strong> field needs water. Temperature is ${temp}°C and soil is <strong>${soil}</strong>. Irrigate early morning to reduce evaporation loss.`,
+    reasonNo:(crop,temp,soil)=>`Your <strong>${crop}</strong> field has enough moisture. Soil is <strong>${soil}</strong> and temperature is ${temp}°C. You can skip irrigation today and save water.`,
+    soilDryLabel:'Dry / Cracked', soilNormLabel:'Normal / Moist', soilWetLabel:'Wet / Saturated',
+  },
+  hi: {
+    appTitle:'स्मार्ट सिंचाई योजनाकार',
+    appSub:'हर किसान के लिए सरल सलाह — कोई तकनीकी जानकारी जरूरी नहीं',
+    tabFarmer:'🌱 सिंचाई सलाह', tabWeather:'🌤 मौसम', tabSchedule:'📅 अनुसूची',
+    lblLocation:'आपका स्थान',
+    cityTitle:'आप किस गाँव या शहर में हैं?',
+    cityDesc:'हम आपके क्षेत्र का मौसम स्वचालित रूप से लाएंगे',
+    btnGetWeather:'मौसम लाएं 🌤',
+    lblCropStep:'आपकी फसल और खेत',
+    cropTitle:'अपनी फसल और खेत के बारे में बताएं',
+    lblCropType:'फसल का प्रकार', lblAcres:'खेत का आकार (एकड़)',
+    lblSoil:'अभी मिट्टी कैसी है?',
+    sDry:'सूखी', sNormal:'सामान्य', sWet:'गीली',
+    btnAdvise:'🌾 सिंचाई सलाह लें',
+    resSub:'मौसम और मिट्टी की स्थिति के आधार पर',
+    lblBestTime:'सबसे अच्छा समय', lblTimeUnit:'आज सिंचाई के लिए',
+    lblWater:'पानी की जरूरत', lblNext:'अगली सिंचाई', lblNextUnit:'अनुसूची',
+    lblWeatherNow:'अभी मौसम', lblYourCrop:'आपकी फसल', lblCropUnit:'चुनी गई फसल',
+    lblYourField:'आपका खेत', lblFieldUnit:'एकड़',
+    resTitleYes:'✅ आज सिंचाई करें', resTitleNo:'💤 आज सिंचाई नहीं',
+    whTitle:'लाइव मौसम डेटा', whDesc:'किसी भी शहर या गाँव का मौसम देखें',
+    wlTemp:'तापमान', wlHum:'नमी', wlCond:'मौसम', wlWind:'हवा की गति',
+    wlAtm:'वायुमंडलीय विवरण', wlFeels:'महसूस होता है', wlPressure:'दबाव',
+    wlVis:'दृश्यता', wlClouds:'बादल',
+    wlSun:'सूर्य और स्थान', wlSunrise:'सूर्योदय', wlSunset:'सूर्यास्त',
+    wlCountry:'देश', wlMinmax:'न्यूनतम / अधिकतम',
+    shTitle:'अनुसूची योजनाकार', shDesc:'विस्तृत सिंचाई अनुसूची बनाएं',
+    sfTitle:'आपकी जानकारी',
+    sfDesc:'बस अपना स्थान, फसल और मिट्टी बताएं — बाकी हम संभालेंगे',
+    sfCityLbl:'गाँव / शहर', sfCropLbl:'फसल का प्रकार', sfSoilLbl:'मिट्टी कैसी है?',
+    sfBtn:'📅 अनुसूची बनाएं', srTitle:'सिंचाई अनुसूची',
+    ssDry:'सूखी', ssNormal:'सामान्य', ssWet:'गीली',
+    siToday:'आज सिंचाई?', siTime:'सबसे अच्छा समय', siAmt:'पानी की मात्रा',
+    siNext:'अगली सिंचाई', siReason:'कारण',
+    schedEmptyTxt:'अनुसूची देखने के लिए जनरेट करें',
+    toastWeatherOk: c=>`✅ ${c} का मौसम मिला`,
+    toastWeatherErr:'मौसम नहीं मिला। शहर का नाम जांचें।',
+    toastBackendErr:'बैकेंड से कनेक्ट नहीं। क्या Docker चल रहा है?',
+    toastSchedOk:'📅 अनुसूची तैयार है!',
+    toastEnterCity:'कृपया अपना शहर या गाँव का नाम दर्ज करें',
+    toastEnterCityFirst:'⚠️ पहले मौसम लाएं (चरण 1)',
+    reasonYes:(crop,temp,soil)=>`आपके <strong>${crop}</strong> के खेत को पानी चाहिए। तापमान ${temp}°C है और मिट्टी <strong>${soil}</strong> है। वाष्पीकरण कम करने के लिए सुबह जल्दी सिंचाई करें।`,
+    reasonNo:(crop,temp,soil)=>`आपके <strong>${crop}</strong> के खेत में पर्याप्त नमी है। मिट्टी <strong>${soil}</strong> है और तापमान ${temp}°C है। आज सिंचाई छोड़ सकते हैं।`,
+    soilDryLabel:'सूखी / दरारें', soilNormLabel:'सामान्य / नम', soilWetLabel:'गीली / भरी हुई',
+  },
+  mr: {
+    appTitle:'स्मार्ट सिंचन नियोजक',
+    appSub:'प्रत्येक शेतकऱ्यासाठी सोपा सल्ला — कोणतेही तांत्रिक ज्ञान आवश्यक नाही',
+    tabFarmer:'🌱 सिंचन सल्ला', tabWeather:'🌤 हवामान', tabSchedule:'📅 वेळापत्रक',
+    lblLocation:'तुमचे ठिकाण',
+    cityTitle:'तुम्ही कोणत्या गावात किंवा शहरात आहात?',
+    cityDesc:'आम्ही तुमच्या भागाचे हवामान आपोआप आणू',
+    btnGetWeather:'हवामान आणा 🌤',
+    lblCropStep:'तुमचे पीक आणि शेत',
+    cropTitle:'तुमच्या पीक आणि शेताबद्दल सांगा',
+    lblCropType:'पिकाचा प्रकार', lblAcres:'शेताचा आकार (एकर)',
+    lblSoil:'आत्ता माती कशी आहे?',
+    sDry:'कोरडी', sNormal:'सामान्य', sWet:'ओली',
+    btnAdvise:'🌾 सिंचन सल्ला घ्या',
+    resSub:'हवामान आणि मातीच्या स्थितीवर आधारित',
+    lblBestTime:'सर्वोत्तम वेळ', lblTimeUnit:'आज सिंचनासाठी',
+    lblWater:'पाण्याची गरज', lblNext:'पुढील सिंचन', lblNextUnit:'वेळापत्रक',
+    lblWeatherNow:'आत्ता हवामान', lblYourCrop:'तुमचे पीक', lblCropUnit:'निवडलेले पीक',
+    lblYourField:'तुमचे शेत', lblFieldUnit:'एकर',
+    resTitleYes:'✅ आज सिंचन करा', resTitleNo:'💤 आज सिंचन नको',
+    whTitle:'लाईव्ह हवामान माहिती', whDesc:'कोणत्याही शहर किंवा गावाचे हवामान पाहा',
+    wlTemp:'तापमान', wlHum:'आर्द्रता', wlCond:'हवामान', wlWind:'वाऱ्याचा वेग',
+    wlAtm:'वातावरण तपशील', wlFeels:'जाणवते', wlPressure:'दाब',
+    wlVis:'दृश्यमानता', wlClouds:'ढग',
+    wlSun:'सूर्य आणि ठिकाण', wlSunrise:'सूर्योदय', wlSunset:'सूर्यास्त',
+    wlCountry:'देश', wlMinmax:'किमान / कमाल',
+    shTitle:'वेळापत्रक नियोजक', shDesc:'सविस्तर सिंचन वेळापत्रक तयार करा',
+    sfTitle:'तुमची माहिती',
+    sfDesc:'फक्त ठिकाण, पीक आणि माती सांगा — बाकी आम्ही करतो',
+    sfCityLbl:'गाव / शहर', sfCropLbl:'पिकाचा प्रकार', sfSoilLbl:'माती कशी आहे?',
+    sfBtn:'📅 वेळापत्रक तयार करा', srTitle:'सिंचन वेळापत्रक',
+    ssDry:'कोरडी', ssNormal:'सामान्य', ssWet:'ओली',
+    siToday:'आज सिंचन?', siTime:'सर्वोत्तम वेळ', siAmt:'पाण्याचे प्रमाण',
+    siNext:'पुढील सिंचन', siReason:'कारण',
+    schedEmptyTxt:'वेळापत्रक पाहण्यासाठी तयार करा',
+    toastWeatherOk: c=>`✅ ${c} चे हवामान मिळाले`,
+    toastWeatherErr:'हवामान मिळाले नाही. शहराचे नाव तपासा.',
+    toastBackendErr:'बॅकएंड जोडलेले नाही. Docker चालू आहे का?',
+    toastSchedOk:'📅 वेळापत्रक तयार आहे!',
+    toastEnterCity:'कृपया तुमच्या शहर किंवा गावाचे नाव टाका',
+    toastEnterCityFirst:'⚠️ आधी हवामान आणा (पायरी 1)',
+    reasonYes:(crop,temp,soil)=>`तुमच्या <strong>${crop}</strong> शेताला पाणी हवे. तापमान ${temp}°C आहे आणि माती <strong>${soil}</strong> आहे. सकाळी लवकर सिंचन करा.`,
+    reasonNo:(crop,temp,soil)=>`तुमच्या <strong>${crop}</strong> शेतात पुरेसा ओलावा आहे. माती <strong>${soil}</strong> आहे आणि तापमान ${temp}°C आहे. आज सिंचन टाळू शकता.`,
+    soilDryLabel:'कोरडी / भेगाळलेली', soilNormLabel:'सामान्य / ओलसर', soilWetLabel:'ओली / भरलेली',
+  }
+};
+
+/* id map for bulk translation */
+const ids = {
+  appTitle:'app-title', appSub:'app-sub',
+  tabFarmer:'tab-farmer', tabWeather:'tab-weather', tabSchedule:'tab-schedule',
+  lblLocation:'lbl-location', cityTitle:'city-title', cityDesc:'city-desc',
+  btnGetWeather:'btn-get-weather', lblCropStep:'lbl-crop-step', cropTitle:'crop-title',
+  lblCropType:'lbl-crop-type', lblAcres:'lbl-acres', lblSoil:'lbl-soil',
+  sDry:'s-dry', sNormal:'s-normal', sWet:'s-wet',
+  btnAdvise:'btn-advise', resSub:'res-subtitle',
+  lblBestTime:'lbl-best-time', lblTimeUnit:'lbl-time-unit', lblWater:'lbl-water',
+  lblNext:'lbl-next', lblNextUnit:'lbl-next-unit', lblWeatherNow:'lbl-weather-now',
+  lblYourCrop:'lbl-your-crop', lblCropUnit:'lbl-crop-unit',
+  lblYourField:'lbl-your-field', lblFieldUnit:'lbl-field-unit',
+  whTitle:'wh-title', whDesc:'wh-desc',
+  wlTemp:'wl-temp', wlHum:'wl-hum', wlCond:'wl-cond', wlWind:'wl-wind',
+  wlAtm:'wl-atm', wlFeels:'wl-feels', wlPressure:'wl-pressure',
+  wlVis:'wl-vis', wlClouds:'wl-clouds',
+  wlSun:'wl-sun', wlSunrise:'wl-sunrise', wlSunset:'wl-sunset',
+  wlCountry:'wl-country', wlMinmax:'wl-minmax',
+  shTitle:'sh-title', shDesc:'sh-desc',
+  sfTitle:'sf-title', sfDesc:'sf-desc',
+  sfCityLbl:'sf-city-lbl', sfCropLbl:'sf-crop-lbl', sfSoilLbl:'sf-soil-lbl',
+  sfBtn:'btn-sched', srTitle:'sr-title',
+  ssDry:'ss-dry', ssNormal:'ss-normal', ssWet:'ss-wet',
+  siToday:'si-today-lbl', siTime:'si-time-lbl', siAmt:'si-amt-lbl',
+  siNext:'si-next-lbl', siReason:'si-reason-lbl',
+  schedEmptyTxt:'sched-empty-txt',
+};
+
+/* ══════════════════════════════════
+   LANG
+══════════════════════════════════ */
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach((b,i) =>
+    b.classList.toggle('active', ['en','hi','mr'][i] === lang));
+  const s = T[lang];
+  for (const [key, elId] of Object.entries(ids)) {
+    const el = document.getElementById(elId);
+    if (el && typeof s[key] === 'string') el.textContent = s[key];
+  }
+}
+
+/* ══════════════════════════════════
+   TOAST
+══════════════════════════════════ */
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.innerHTML = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.className = 'toast', 3500);
+}
+
+/* ══════════════════════════════════
+   TABS
+══════════════════════════════════ */
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+/* ══════════════════════════════════
+   SOIL HELPERS
+══════════════════════════════════ */
+function setSoil(level, el) {
+  soilLevel = level;
+  el.closest('.soil-btns').querySelectorAll('.soil-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setSchedSoil(level, el) {
+  schedSoilLevel = level;
+  el.closest('.soil-btns').querySelectorAll('.soil-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function soilMoisture(level) { return level==='dry'?18:level==='normal'?45:72; }
+
+function soilLabel(level) {
+  const s = T[currentLang];
+  return level==='dry' ? s.soilDryLabel : level==='normal' ? s.soilNormLabel : s.soilWetLabel;
+}
+
+/* ══════════════════════════════════
+   IRRIGATION ADVICE — auto weather fetch
+══════════════════════════════════ */
+async function autoFetchWeather() {
+  const city = document.getElementById('farmer-city').value.trim();
+  if (!city) { toast(T[currentLang].toastEnterCity, 'err'); return; }
+  const btn = document.getElementById('btn-get-weather');
+  btn.innerHTML = `<span class="spinner spinner-light"></span>`;
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/weather/${encodeURIComponent(city)}`);
+    const d = await res.json();
+    if (d.cod && d.cod !== 200) throw new Error();
+    cachedWeather = d;
+    document.getElementById('weather-chips').innerHTML = `
+      <div class="chip">🌡 <strong>${d.main.temp}°C</strong></div>
+      <div class="chip">💧 <strong>${d.main.humidity}%</strong></div>
+      <div class="chip">💨 <strong>${d.wind.speed} km/h</strong></div>
+      <div class="chip">🌤 <strong>${d.weather[0].main}</strong></div>
+      <div class="chip">📍 <strong>${d.name}</strong></div>
+    `;
+    toast(T[currentLang].toastWeatherOk(d.name), 'ok');
+  } catch(e) {
+    toast(T[currentLang].toastWeatherErr, 'err');
+    cachedWeather = null;
+  }
+  btn.textContent = T[currentLang].btnGetWeather;
+  btn.disabled = false;
+}
+
+/* ══════════════════════════════════
+   IRRIGATION ADVICE — get advice
+══════════════════════════════════ */
+async function getAdvice() {
+  if (!cachedWeather) { toast(T[currentLang].toastEnterCityFirst, 'err'); return; }
+  const btn = document.getElementById('btn-advise');
+  btn.innerHTML = `<span class="spinner"></span>`;
+  btn.classList.add('loading');
+
+  const crop     = document.getElementById('crop-type').value;
+  const acres    = parseFloat(document.getElementById('field-acres').value) || 2;
+  const temp     = cachedWeather.main.temp;
+  const humidity = cachedWeather.main.humidity;
+  const rainfall = cachedWeather.rain ? (cachedWeather.rain['1h'] || 0) : 0;
+  const moisture = soilMoisture(soilLevel);
+  const soil     = soilLabel(soilLevel);
+
+  try {
+    const res = await fetch(`${API}/generate-schedule`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+    temperature:       temp,
+    humidity:          humidity,
+    rainfall_forecast: rainfall,
+    soil_moisture:     moisture,
+    crop_type:         crop,
+    soil_condition:    soilLevel    // ← ADD THIS LINE
+})
+    });
+    const d = await res.json();
+    const irrigate = d.today_irrigation;
+
+    const card = document.getElementById('result-card');
+    card.style.display = 'block';
+
+    const iconBox = document.getElementById('res-icon-box');
+    const titleEl = document.getElementById('res-title');
+    iconBox.className = 'result-icon-big ' + (irrigate?'yes':'no');
+    iconBox.textContent = irrigate ? '💧' : '☀️';
+    titleEl.className = 'result-title ' + (irrigate?'yes':'no');
+    titleEl.textContent = irrigate ? T[currentLang].resTitleYes : T[currentLang].resTitleNo;
+
+    document.getElementById('res-time').textContent        = d.recommended_time;
+    document.getElementById('res-water').textContent       = d.water_amount_mm + ' mm';
+    document.getElementById('res-next').textContent        = d.next_irrigation_day;
+    document.getElementById('res-weather-val').textContent = temp + '°C';
+    document.getElementById('res-weather-sub').textContent = cachedWeather.weather[0].main;
+    document.getElementById('res-crop').textContent        = crop;
+    document.getElementById('res-field').textContent       = acres;
+
+    const reasonFn = irrigate ? T[currentLang].reasonYes : T[currentLang].reasonNo;
+    document.getElementById('res-reason').innerHTML = reasonFn(crop, temp, soil);
+
+    card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  } catch(e) {
+    toast(T[currentLang].toastBackendErr, 'err');
+  }
+  btn.textContent = T[currentLang].btnAdvise;
+  btn.classList.remove('loading');
+}
+
+/* ══════════════════════════════════
+   WEATHER TAB
+══════════════════════════════════ */
+function fmtTime(unix) {
+  return new Date(unix*1000).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+async function fetchWeatherTab() {
+  const city = document.getElementById('w-city').value.trim();
+  if (!city) { toast(T[currentLang].toastEnterCity, 'err'); return; }
+  const btn = document.getElementById('btn-fetch-w');
+  btn.innerHTML = `<span class="spinner"></span>`;
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/weather/${encodeURIComponent(city)}`);
+    const d = await res.json();
+    if (d.cod && d.cod !== 200) throw new Error();
+    document.getElementById('wv-temp').textContent     = d.main.temp + '°C';
+    document.getElementById('wv-hum').textContent      = d.main.humidity + '%';
+    document.getElementById('wv-cond').textContent     = d.weather[0].description;
+    document.getElementById('wv-wind').textContent     = d.wind.speed + ' km/h';
+    document.getElementById('wv-feels').textContent    = d.main.feels_like + '°C';
+    document.getElementById('wv-pressure').textContent = d.main.pressure + ' hPa';
+    document.getElementById('wv-vis').textContent      = (d.visibility/1000).toFixed(1) + ' km';
+    document.getElementById('wv-clouds').textContent   = d.clouds.all + '%';
+    document.getElementById('wv-sunrise').textContent  = fmtTime(d.sys.sunrise);
+    document.getElementById('wv-sunset').textContent   = fmtTime(d.sys.sunset);
+    document.getElementById('wv-country').textContent  = d.sys.country;
+    document.getElementById('wv-minmax').textContent   = d.main.temp_min + '° / ' + d.main.temp_max + '°';
+    toast(T[currentLang].toastWeatherOk(d.name), 'ok');
+  } catch(e) {
+    toast(T[currentLang].toastWeatherErr, 'err');
+  }
+  btn.textContent = 'Fetch Weather';
+  btn.disabled = false;
+}
+
+/* ══════════════════════════════════
+   SCHEDULE — weather fetch (auto on Enter)
+══════════════════════════════════ */
+async function schedFetchWeather() {
+  const city = document.getElementById('sc-city').value.trim();
+  if (!city) return;
+  try {
+    const res = await fetch(`${API}/weather/${encodeURIComponent(city)}`);
+    const d = await res.json();
+    if (d.cod && d.cod !== 200) throw new Error();
+    schedWeather = d;
+    document.getElementById('sched-chips').innerHTML = `
+      <div class="chip">🌡 <strong>${d.main.temp}°C</strong></div>
+      <div class="chip">💧 <strong>${d.main.humidity}%</strong></div>
+      <div class="chip">💨 <strong>${d.wind.speed} km/h</strong></div>
+      <div class="chip">🌤 <strong>${d.weather[0].main}</strong></div>
+      <div class="chip">📍 <strong>${d.name}</strong></div>
+    `;
+    toast(T[currentLang].toastWeatherOk(d.name), 'ok');
+  } catch(e) {
+    toast(T[currentLang].toastWeatherErr, 'err');
+    schedWeather = null;
+  }
+}
+
+/* ══════════════════════════════════
+   SCHEDULE — generate
+   Farmer inputs: city, crop, soil feel
+   System computes: temp, humidity, rainfall, moisture
+══════════════════════════════════ */
+async function generateSchedule() {
+  const city = document.getElementById('sc-city').value.trim();
+  if (!city) { toast(T[currentLang].toastEnterCity, 'err'); return; }
+
+  const btn = document.getElementById('btn-sched');
+  btn.innerHTML = `<span class="spinner"></span>`;
+  btn.classList.add('loading');
+
+  // Auto-fetch weather if not already fetched for this city
+  if (!schedWeather) {
+    await schedFetchWeather();
+    if (!schedWeather) {
+      btn.textContent = T[currentLang].sfBtn;
+      btn.classList.remove('loading');
+      return;
+    }
+  }
+
+  // Map soil button → moisture %, rainfall from live weather API
+  const moisture = soilMoisture(schedSoilLevel);
+  const rainfall = schedWeather.rain ? (schedWeather.rain['1h'] || 0) : 0;
+
+  try {
+    const res = await fetch(`${API}/generate-schedule`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        temperature:       schedWeather.main.temp,
+        humidity:          schedWeather.main.humidity,
+        rainfall_forecast: rainfall,
+        soil_moisture:     moisture,
+        crop_type:         document.getElementById('sc-crop').value,
+        soil_condition:    schedSoilLevel   // ← ADD THIS LINE
+    })
+    });
+    const d = await res.json();
+
+    document.getElementById('sched-empty').style.display = 'none';
+    document.getElementById('sched-items').style.display = 'block';
+    document.getElementById('si-today').textContent  = d.today_irrigation ? '✅ Yes' : '❌ No';
+    document.getElementById('si-time').textContent   = d.recommended_time;
+    document.getElementById('si-amt').textContent    = d.water_amount_mm + ' mm';
+    document.getElementById('si-next').textContent   = d.next_irrigation_day;
+    document.getElementById('si-reason').textContent = d.reason;
+
+    toast(T[currentLang].toastSchedOk, 'ok');
+  } catch(e) {
+    toast(T[currentLang].toastBackendErr, 'err');
+  }
+
+  btn.textContent = T[currentLang].sfBtn;
+  btn.classList.remove('loading');
+}
+
+// Clear cached schedule weather when city input changes
+document.getElementById('sc-city').addEventListener('input', () => { schedWeather = null; });
+</script>
+</body>
+</html>

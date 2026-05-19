@@ -1,0 +1,10 @@
+from pydantic import BaseModel
+from typing import Optional
+
+class ScheduleInput(BaseModel):
+    temperature:       float
+    humidity:          float
+    rainfall_forecast: float
+    soil_moisture:     float
+    crop_type:         str
+    soil_condition:    Optional[str] = "normal"
