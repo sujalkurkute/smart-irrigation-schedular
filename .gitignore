@@ -12,6 +12,16 @@ __pycache__/
 # ML models (optional)
 *.pkl
 
+# ML models
+*.pkl
+
+# Large datasets
+*.csv
+
+# Environment
+venv/
+backend/venv/
+
 # VS Code
 .vscode/
 
